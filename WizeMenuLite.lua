@@ -1,4 +1,4 @@
-local keyListUrl = "https://test-eljy.onrender.com/wmk.json"
+local keyListUrl = "https://raw.githack.com/WM5M/test/refs/heads/main/wmk.json"
 local KeysBin = MachoWebRequest(keyListUrl)
 local CurrentKey = MachoAuthenticationKey()
 
@@ -5529,3 +5529,4 @@ MachoMenuButton(SettingTabSections[3], "Framework Checker", function()
     local frameworkName = DetectFramework()
     notify("Framework: %s", frameworkName)
 end)
+
