@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Katana</title>
+    <style>
+        /* Your existing styles + Access Modal */
+        body {
+            font-family: Arial, sans-serif;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .menu-container {
+            width: 400px;
+            height: 600px;
+            margin: 50px auto;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: #333;
+            padding: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .header {
+            padding: 15px;
+            background: #ff6b6b;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .item {
+            padding: 15px;
+            background: #444;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .item:hover {
+            background: #555;
+        }
+
+        .item.selected {
+            background: #ff6b6b;
+            border-color: #ff4757;
+        }
+
+        .input-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-label {
+            font-weight: bold;
+        }
+
+        .input-value {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .state {
+            color: #10ac84;
+        }
+
+        .info-text {
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+        }
+
+        /* ========== ACCESS CODE MODAL ========== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+            text-align: center;
+            width: 300px;
+            border: 2px solid #ff6b6b;
+        }
+
+        .modal h2 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .modal p {
+            color: #ccc;
+            margin-bottom: 25px;
+        }
+
+        #accessCodeInput {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #333;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        #accessCodeInput:focus {
+            border-color: #ff6b6b;
+            outline: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-success {
+            background: #10ac84;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- ACCESS CODE MODAL -->
+    <div id="accessModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>🔒 Katana Menu</h2>
+            <p>Enter Access Code:</p>
+            <input type="password" id="accessCodeInput" placeholder="R8TY67" maxlength="6">
+            <div class="modal-buttons">
+                <button class="btn btn-success" onclick="submitCode()">Submit</button>
+                <button class="btn btn-danger" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="menu" class="menu-container" style="display: none;"></div>
+
+    <script>
+        // ========== ACCESS CODE MODAL FUNCTIONS ==========
+        function showAccessModal() {
+            document.getElementById('accessModal').style.display = 'flex';
+            document.getElementById('accessCodeInput').focus();
+        }
+
+        function hideAccessModal() {
+            document.getElementById('accessModal').style.display = 'none';
+        }
+
+        function submitCode() {
+            const code = document.getElementById('accessCodeInput').value;
+            fetch(`https://${GetParentResourceName()}/accessCodeSubmit`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: code})
+            });
+        }
+
+        function closeModal() {
+            fetch(`https://${GetParentResourceName()}/accessCodeClose`, {
+                method: 'POST'
+            });
+        }
+
+        document.getElementById('accessCodeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitCode();
+            }
+        });
+
+        // ========== MAIN MENU (YOUR EXISTING CODE) ==========
+        window.addEventListener('message', function(event) {
+            const msg = event.data;
+            if (msg.type === 'showAccessModal') {
+                showAccessModal();
+            } else if (msg.type === 'hideAccessModal') {
+                hideAccessModal();
+            } else if (msg.action === 'update') {
+                updateMenu(msg.data);
+            }
+        });
+
+        function updateMenu(state) {
+            const menu = document.getElementById('menu');
+            menu.style.display = 'block';
+
+            menu.innerHTML = '';
+
+            const tabBar = document.createElement('div');
+            tabBar.classList.add('tab-bar');
+            state.tabs.forEach((tab, idx) => {
+                const tabEl = document.createElement('div');
+                tabEl.classList.add('tab');
+                if (idx === state.activeTab) tabEl.classList.add('active');
+                tabEl.textContent = tab.title;
+                tabBar.appendChild(tabEl);
+            });
+            menu.appendChild(tabBar);
+
+            const header = document.createElement('div');
+            header.classList.add('header');
+            header.textContent = state.tabs[state.activeTab].header || '';
+            menu.appendChild(header);
+
+            if (!state.isContentPanelOpen) {
+                const info = document.createElement('div');
+                info.classList.add('info-text');
+                info.textContent = 'Press Enter to open tab content';
+                menu.appendChild(info);
+                return;
+            }
+
+            const content = document.createElement('div');
+            content.classList.add('content');
+
+            const currentTab = state.tabs[state.activeTab];
+            let container = document.createElement('div');
+            if (currentTab.type === 'grid') {
+                container.classList.add('grid');
+                container.style.gridTemplateColumns = `repeat(${currentTab.cols || 2}, 1fr)`;
+            }
+
+            let selectedEl = null;
+            currentTab.items.forEach((item, idx) => {
+                let itemEl = document.createElement('div');
+                itemEl.classList.add('item');
+                if (idx === state.selection.index) {
+                    itemEl.classList.add('selected');
+                    selectedEl = itemEl;
+                }
+
+                if (item.type === 'input') {
+                    itemEl.classList.add('input-item');
+                    const label = document.createElement('span');
+                    label.classList.add('input-label');
+                    label.textContent = item.label + ':';
+                    itemEl.appendChild(label);
+
+                    const value = document.createElement('span');
+                    value.classList.add('input-value');
+                    let valText = item.value || item.placeholder || '';
+                    if (state.isTyping && idx === state.selection.index) {
+                        valText += '|';
+                    }
+                    value.textContent = valText;
+                    itemEl.appendChild(value);
+                } else {
+                    let text = item.label || '';
+                    if (item.state) {
+                        const stateSpan = document.createElement('span');
+                        stateSpan.classList.add('state');
+                        stateSpan.textContent = ` (${item.state})`;
+                        itemEl.appendChild(document.createTextNode(text));
+                        itemEl.appendChild(stateSpan);
+                    } else {
+                        itemEl.textContent = text;
+                    }
+                }
+
+                container.appendChild(itemEl);
+            });
+
+            content.appendChild(container);
+            menu.appendChild(content);
+
+            if (selectedEl) {
+                selectedEl.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+        }
+    </script>
+</body>
+</html>
