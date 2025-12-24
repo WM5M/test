@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JiGgY MeNu</title>
+    <title>Katana</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,34 +16,34 @@
         }
         .menu-container {
             position: absolute;
-            left: 50vw;
-            top: 50vh;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(50, 50, 50, 0.9));
             padding: 25px;
             border-radius: 15px;
             width: 850px;
-            max-height: 650px;
-            overflow: hidden;
+            max-height: 85vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             box-shadow: 0 0 20px rgba(155, 0, 255, 0.5), 0 0 40px rgba(255, 105, 180, 0.3);
             transition: all 0.3s ease;
-            cursor: grab; /* Default cursor for draggable area */
-        }
-        .menu-container.dragging {
-            cursor: grabbing;
-            transition: none; /* Disable transitions during drag for smoothness */
+            display: flex;
+            flex-direction: column;
         }
         .menu-container:hover {
             box-shadow: 0 0 30px rgba(155, 0, 255, 0.7), 0 0 50px rgba(255, 105, 180, 0.5);
         }
-        .drag-handle {
-            height: 20px;
-            background: rgba(155, 0, 255, 0.2);
+        .menu-container::-webkit-scrollbar {
+            width: 10px;
+        }
+        .menu-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 5px;
-            cursor: grab;
-            text-align: center;
-            font-size: 12px;
-            color: #ff69b4;
-            margin-bottom: 10px;
+        }
+        .menu-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(#9b00ff, #ff69b4);
+            border-radius: 5px;
         }
         .tab-bar {
             display: flex;
@@ -52,6 +52,7 @@
             background: rgba(0, 0, 0, 0.5);
             border-radius: 10px;
             padding: 5px;
+            flex-shrink: 0;
         }
         .tab {
             padding: 10px 20px;
@@ -75,14 +76,15 @@
             color: #ff69b4;
             text-shadow: 0 0 5px rgba(255, 105, 180, 0.7);
             letter-spacing: 1px;
-            cursor: grab; /* Make header draggable too */
+            flex-shrink: 0;
         }
         .content {
             overflow-y: auto;
-            max-height: 480px;
             padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
+            flex-grow: 1;
+            min-height: 0;
         }
         .content::-webkit-scrollbar {
             width: 8px;
@@ -105,11 +107,144 @@
             justify-content: space-between;
             transition: all 0.2s ease;
             box-shadow: inset 0 0 5px rgba(155, 0, 255, 0.2);
-            cursor: pointer;
         }
         .item:hover {
             background: rgba(255, 255, 255, 0.1);
             transform: translateX(5px);
         }
         .item.selected {
-            background: linear-gradient(135deg, rgba(155
+            background: linear-gradient(135deg, rgba(155, 0, 255, 0.4), rgba(255, 105, 180, 0.4));
+            border: 2px solid #ff69b4;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+        }
+        .input-item {
+            display: flex;
+            align-items: center;
+        }
+        .input-label {
+            flex: 1;
+            font-weight: bold;
+            color: #ff69b4;
+        }
+        .input-value {
+            flex: 2;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-left: 15px;
+            color: #ffffff;
+            border: 1px solid rgba(155, 0, 255, 0.3);
+            transition: border 0.3s;
+        }
+        .input-value:focus {
+            border: 1px solid #ff69b4;
+        }
+        .grid {
+            display: grid;
+            gap: 15px;
+        }
+        .state {
+            color: #ff69b4;
+            font-style: italic;
+            margin-left: 10px;
+        }
+        .info-text {
+            text-align: center;
+            color: #bbb;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu" class="menu-container" style="display: none;"></div>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            const msg = event.data;
+            if (msg.action === 'update') {
+                updateMenu(msg.data);
+            }
+        });
+
+        function updateMenu(state) {
+            const menu = document.getElementById('menu');
+            menu.style.display = 'block';
+
+            menu.innerHTML = '';
+
+            const tabBar = document.createElement('div');
+            tabBar.classList.add('tab-bar');
+            state.tabs.forEach((tab, idx) => {
+                const tabEl = document.createElement('div');
+                tabEl.classList.add('tab');
+                if (idx === state.activeTab) tabEl.classList.add('active');
+                tabEl.textContent = tab.title;
+                tabBar.appendChild(tabEl);
+            });
+            menu.appendChild(tabBar);
+
+            const header = document.createElement('div');
+            header.classList.add('header');
+            header.textContent = state.tabs[state.activeTab].header || '';
+            menu.appendChild(header);
+
+            if (!state.isContentPanelOpen) {
+                const info = document.createElement('div');
+                info.classList.add('info-text');
+                info.textContent = 'Press Enter to open tab content';
+                menu.appendChild(info);
+                return;
+            }
+
+            const content = document.createElement('div');
+            content.classList.add('content');
+
+            const currentTab = state.tabs[state.activeTab];
+            let container = document.createElement('div');
+            if (currentTab.type === 'grid') {
+                container.classList.add('grid');
+                container.style.gridTemplateColumns = `repeat(${currentTab.cols || 2}, 1fr)`;
+            }
+
+            currentTab.items.forEach((item, idx) => {
+                let itemEl = document.createElement('div');
+                itemEl.classList.add('item');
+                if (idx === state.selection.index) itemEl.classList.add('selected');
+
+                if (item.type === 'input') {
+                    itemEl.classList.add('input-item');
+                    const label = document.createElement('span');
+                    label.classList.add('input-label');
+                    label.textContent = item.label + ':';
+                    itemEl.appendChild(label);
+
+                    const value = document.createElement('span');
+                    value.classList.add('input-value');
+                    let valText = item.value || item.placeholder || '';
+                    if (state.isTyping && idx === state.selection.index) {
+                        valText += '|';
+                    }
+                    value.textContent = valText;
+                    itemEl.appendChild(value);
+                } else {
+                    let text = item.label || '';
+                    if (item.state) {
+                        const stateSpan = document.createElement('span');
+                        stateSpan.classList.add('state');
+                        stateSpan.textContent = ` (${item.state})`;
+                        itemEl.appendChild(document.createTextNode(text));
+                        itemEl.appendChild(stateSpan);
+                    } else {
+                        itemEl.textContent = text;
+                    }
+                }
+
+                container.appendChild(itemEl);
+            });
+
+            content.appendChild(container);
+            menu.appendChild(content);
+        }
+    </script>
+</body>
+</html>
